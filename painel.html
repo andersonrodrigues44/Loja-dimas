@@ -1,1 +1,72 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Painel - Loja de Diamantes</title>
+</head>
 
+<body>
+  <h1>💎 Painel da Loja</h1>
+  <p>Pedidos recebidos:</p>
+
+  <div id="pedidos">
+    Carregando pedidos...
+  </div>
+
+  <script type="module">
+    import { initializeApp }
+      from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
+    import {
+      getDatabase,
+      ref,
+      onValue
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDtWIRvhvXRf3YpjeToPGqIbCsHLu87tdM",
+      authDomain: "loja-de-diamantes-f48bd.firebaseapp.com",
+      databaseURL: "https://loja-de-diamantes-f48bd-default-rtdb.firebaseio.com",
+      projectId: "loja-de-diamantes-f48bd",
+      storageBucket: "loja-de-diamantes-f48bd.firebasestorage.app",
+      messagingSenderId: "1003583191244",
+      appId: "1:1003583191244:web:910b3dc3369b1898ee6a69",
+      measurementId: "G-1XXZK0WZMZ"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const database = getDatabase(app);
+
+    const pedidosRef = ref(database, "pedidos");
+
+    onValue(pedidosRef, (snapshot) => {
+      const pedidos = snapshot.val();
+      const area = document.getElementById("pedidos");
+
+      if (!pedidos) {
+        area.innerHTML = "<p>Nenhum pedido recebido.</p>";
+        return;
+      }
+
+      area.innerHTML = "";
+
+      Object.entries(pedidos).reverse().forEach(([id, pedido]) => {
+        const div = document.createElement("div");
+
+        div.innerHTML = `
+          <hr>
+          <h3>🛒 Pedido</h3>
+          <p><strong>💎 Pacote:</strong> ${pedido.pacote}</p>
+          <p><strong>💰 Valor:</strong> ${pedido.valor}</p>
+          <p><strong>🆔 ID Free Fire:</strong> ${pedido.idFreeFire}</p>
+          <p><strong>📌 Status:</strong> ${pedido.status}</p>
+          <p><strong>📅 Data:</strong> ${pedido.data}</p>
+        `;
+
+        area.appendChild(div);
+      });
+    });
+  </script>
+</body>
+  </html>
