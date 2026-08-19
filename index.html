@@ -1,20 +1,70 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-  <head>
-    <meta charset="UTF-8">
+<head>
+  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Loja de Diamantes</title>
-  </head>
-  <body>
-    <h1>💎 Loja de Diamantes</h1>
-    <p>Compre seus diamantes de forma rápida e segura!</p>
+  <title>Loja de Diamantes</title>
+</head>
+
+<body>
+  <h1>💎 Loja de Diamantes</h1>
+  <p>Compre seus diamantes de forma rápida e segura!</p>
+
+  <hr>
+
+  <h2>Escolha seu pacote</h2>
+
+  <button onclick="comprar('100 💎', 'R$ 2,00')">100 💎 - R$ 2,00</button><br><br>
+  <button onclick="comprar('310 💎', 'R$ 5,00')">310 💎 - R$ 5,00</button><br><br>
+  <button onclick="comprar('520 💎', 'R$ 8,00')">520 💎 - R$ 8,00</button><br><br>
+  <button onclick="comprar('1060 💎', 'R$ 15,00')">1060 💎 - R$ 15,00</button><br><br>
+  <button onclick="comprar('2180 💎', 'R$ 30,00')">2180 💎 - R$ 30,00</button><br><br>
+  <button onclick="comprar('5600 💎', 'R$ 70,00')">5600 💎 - R$ 70,00</button>
+
+  <div id="pedido" style="display:none;">
     <hr>
-    <h2>Escolha seu pacote</h2>
-    <button>100 💎 - R$ 2,00</button>
-    <button>310 💎 - R$ 5,00</button>
-    <button>520 💎 - R$ 8,00</button>
-    <button>1060 💎 - R$ 15,00</button>
-    <button>2180 💎 - R$ 30,00</button>
-    <button>5600 💎 - R$ 70,00</button>
-  </body>
-</html>
+    <h2>🛒 Finalizar pedido</h2>
+
+    <p id="pacoteEscolhido"></p>
+
+    <label>ID do Free Fire:</label><br>
+    <input type="text" id="idff" placeholder="Digite seu ID"><br><br>
+
+    <button onclick="continuar()">Continuar para pagamento</button>
+  </div>
+
+  <script>
+    let pacote = "";
+    let preco = "";
+
+    function comprar(p, valor) {
+      pacote = p;
+      preco = valor;
+
+      document.getElementById("pedido").style.display = "block";
+      document.getElementById("pacoteEscolhido").innerText =
+        "Pacote escolhido: " + pacote + " - " + preco;
+
+      document.getElementById("pedido").scrollIntoView({
+        behavior: "smooth"
+      });
+    }
+
+    function continuar() {
+      let id = document.getElementById("idff").value;
+
+      if (id.trim() === "") {
+        alert("Digite seu ID do Free Fire.");
+        return;
+      }
+
+      alert(
+        "Pedido criado!\\n\\n" +
+        "Pacote: " + pacote + "\\n" +
+        "Valor: " + preco + "\\n" +
+        "ID Free Fire: " + id
+      );
+    }
+  </script>
+</body>
+  </html>
