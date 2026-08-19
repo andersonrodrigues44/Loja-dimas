@@ -96,8 +96,28 @@
           data: new Date().toLocaleString("pt-BR")
         });
 
-        resultado.innerText =
-          "✅ Pedido confirmado! Aguarde a confirmação do pagamento.";
+        resultado.innerHTML = `
+  <h3>✅ Pedido criado!</h3>
+  <p><strong>Valor:</strong> ${preco}</p>
+
+  <p>💠 Faça o pagamento pelo Pix:</p>
+
+  <p><strong>Chave Pix:</strong></p>
+  <input
+    type="text"
+    value="8e538697-25d9-48cf-b757-8f63edd39ad1"
+    readonly
+    style="width:100%;max-width:350px;padding:10px;"
+  >
+
+  <br><br>
+
+  <button onclick="navigator.clipboard.writeText('8e538697-25d9-48cf-b757-8f63edd39ad1')">
+    📋 Copiar chave Pix
+  </button>
+
+  <p>Depois de pagar, aguarde a confirmação.</p>
+`;
 
         document.getElementById("idff").value = "";
       } catch (erro) {
