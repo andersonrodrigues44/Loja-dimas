@@ -30,14 +30,40 @@
     <label>ID do Free Fire:</label><br>
     <input type="text" id="idff" placeholder="Digite seu ID"><br><br>
 
-    <button onclick="continuar()">Continuar para pagamento</button>
+    <button onclick="confirmarPedido()">Confirmar compra</button>
+
+    <p id="resultado"></p>
   </div>
 
-  <script>
+  <script type="module">
+    import { initializeApp }
+      from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
+    import {
+      getDatabase,
+      ref,
+      push,
+      set
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDtWIRvhvXRf3YpjeToPGqIbCsHLu87tdM",
+      authDomain: "loja-de-diamantes-f48bd.firebaseapp.com",
+      databaseURL: "https://loja-de-diamantes-f48bd-default-rtdb.firebaseio.com",
+      projectId: "loja-de-diamantes-f48bd",
+      storageBucket: "loja-de-diamantes-f48bd.firebasestorage.app",
+      messagingSenderId: "1003583191244",
+      appId: "1:1003583191244:web:910b3dc3369b1898ee6a69",
+      measurementId: "G-1XXZK0WZMZ"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const database = getDatabase(app);
+
     let pacote = "";
     let preco = "";
 
-    function comprar(p, valor) {
+    window.comprar = function(p, valor) {
       pacote = p;
       preco = valor;
 
@@ -48,23 +74,38 @@
       document.getElementById("pedido").scrollIntoView({
         behavior: "smooth"
       });
-    }
+    };
 
-    function continuar() {
-      let id = document.getElementById("idff").value;
+    window.confirmarPedido = async function() {
+      const id = document.getElementById("idff").value.trim();
+      const resultado = document.getElementById("resultado");
 
-      if (id.trim() === "") {
-        alert("Digite seu ID do Free Fire.");
+      if (!id) {
+        resultado.innerText = "❌ Digite seu ID do Free Fire.";
         return;
       }
 
-      alert(
-        "Pedido criado!\\n\\n" +
-        "Pacote: " + pacote + "\\n" +
-        "Valor: " + preco + "\\n" +
-        "ID Free Fire: " + id
-      );
-    }
+      try {
+        const novoPedido = push(ref(database, "pedidos"));
+
+        await set(novoPedido, {
+          pacote: pacote,
+          valor: preco,
+          idFreeFire: id,
+          status: "Aguardando pagamento",
+          data: new Date().toLocaleString("pt-BR")
+        });
+
+        resultado.innerText =
+          "✅ Pedido confirmado! Aguarde a confirmação do pagamento.";
+
+        document.getElementById("idff").value = "";
+      } catch (erro) {
+        resultado.innerText =
+          "❌ Não foi possível enviar o pedido. Tente novamente.";
+        console.error(erro);
+      }
+    };
   </script>
 </body>
-  </html>
+</html>
