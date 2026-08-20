@@ -14,25 +14,43 @@
 
   <h2>Escolha seu pacote</h2>
 
-  <button onclick="comprar('100 💎', 'R$ 2,00')">100 💎 - R$ 2,00</button><br><br>
-  <button onclick="comprar('310 💎', 'R$ 5,00')">310 💎 - R$ 5,00</button><br><br>
-  <button onclick="comprar('520 💎', 'R$ 8,00')">520 💎 - R$ 8,00</button><br><br>
-  <button onclick="comprar('1060 💎', 'R$ 15,00')">1060 💎 - R$ 15,00</button><br><br>
-  <button onclick="comprar('2180 💎', 'R$ 30,00')">2180 💎 - R$ 30,00</button><br><br>
-  <button onclick="comprar('5600 💎', 'R$ 70,00')">5600 💎 - R$ 70,00</button>
+  <button onclick="comprar('100 💎', 2)">100 💎 - R$ 2,00</button><br><br>
+  <button onclick="comprar('310 💎', 5)">310 💎 - R$ 5,00</button><br><br>
+  <button onclick="comprar('520 💎', 8)">520 💎 - R$ 8,00</button><br><br>
+  <button onclick="comprar('1060 💎', 15)">1060 💎 - R$ 15,00</button><br><br>
+  <button onclick="comprar('2180 💎', 30)">2180 💎 - R$ 30,00</button><br><br>
+  <button onclick="comprar('5600 💎', 70)">5600 💎 - R$ 70,00</button>
 
   <div id="pedido" style="display:none;">
     <hr>
+
     <h2>🛒 Finalizar pedido</h2>
 
     <p id="pacoteEscolhido"></p>
 
     <label>ID do Free Fire:</label><br>
-    <input type="text" id="idff" placeholder="Digite seu ID"><br><br>
+    <input
+      type="text"
+      id="idff"
+      placeholder="Digite seu ID"
+    >
 
-    <button onclick="confirmarPedido()">Confirmar compra</button>
+    <br><br>
 
-    <p id="resultado"></p>
+    <label>E-mail:</label><br>
+    <input
+      type="email"
+      id="email"
+      placeholder="Digite seu e-mail"
+    >
+
+    <br><br>
+
+    <button onclick="confirmarPedido()">
+      💳 Gerar Pix
+    </button>
+
+    <div id="resultado"></div>
   </div>
 
   <script type="module">
@@ -61,15 +79,17 @@
     const database = getDatabase(app);
 
     let pacote = "";
-    let preco = "";
+    let preco = 0;
 
     window.comprar = function(p, valor) {
       pacote = p;
       preco = valor;
 
       document.getElementById("pedido").style.display = "block";
+
       document.getElementById("pacoteEscolhido").innerText =
-        "Pacote escolhido: " + pacote + " - " + preco;
+        "Pacote escolhido: " + pacote +
+        " - R$ " + preco.toFixed(2).replace(".", ",");
 
       document.getElementById("pedido").scrollIntoView({
         behavior: "smooth"
@@ -78,54 +98,146 @@
 
     window.confirmarPedido = async function() {
       const id = document.getElementById("idff").value.trim();
+      const email = document.getElementById("email").value.trim();
       const resultado = document.getElementById("resultado");
 
       if (!id) {
-        resultado.innerText = "❌ Digite seu ID do Free Fire.";
+        resultado.innerHTML =
+          "<p>❌ Digite seu ID do Free Fire.</p>";
         return;
       }
 
+      if (!email) {
+        resultado.innerHTML =
+          "<p>❌ Digite seu e-mail.</p>";
+        return;
+      }
+
+      resultado.innerHTML =
+        "<p>⏳ Criando seu Pix...</p>";
+
       try {
-        const novoPedido = push(ref(database, "pedidos"));
+        // =========================
+        // CRIA O PIX NO MERCADO PAGO
+        // =========================
+
+        const respostaPix = await fetch("/api/pix", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            valor: preco,
+            email: email,
+            nome: "Cliente",
+            descricao: "Compra de " + pacote
+          })
+        });
+
+        const pix = await respostaPix.json();
+
+        if (!respostaPix.ok || !pix.sucesso) {
+          console.error(pix);
+
+          resultado.innerHTML =
+            "<p>❌ Não foi possível gerar o Pix.</p>";
+
+          return;
+        }
+
+        // =========================
+        // SALVA O PEDIDO NO FIREBASE
+        // =========================
+
+        const novoPedido = push(
+          ref(database, "pedidos")
+        );
 
         await set(novoPedido, {
           pacote: pacote,
-          valor: preco,
+          valor: "R$ " +
+            preco.toFixed(2).replace(".", ","),
           idFreeFire: id,
+          email: email,
+          pagamentoId: pix.id,
           status: "Aguardando pagamento",
           data: new Date().toLocaleString("pt-BR")
         });
 
+        // =========================
+        // MOSTRA O PIX
+        // =========================
+
+        let qrImagem = "";
+
+        if (pix.qr_code_base64) {
+          qrImagem = `
+            <img
+              src="data:image/png;base64,${pix.qr_code_base64}"
+              alt="QR Code Pix"
+              style="width:250px;max-width:100%;"
+            >
+          `;
+        }
+
         resultado.innerHTML = `
-  <h3>✅ Pedido criado!</h3>
-  <p><strong>Valor:</strong> ${preco}</p>
+          <hr>
 
-  <p>💠 Faça o pagamento pelo Pix:</p>
+          <h3>✅ Pix criado!</h3>
 
-  <p><strong>Chave Pix:</strong></p>
-  <input
-    type="text"
-    value="8e538697-25d9-48cf-b757-8f63edd39ad1"
-    readonly
-    style="width:100%;max-width:350px;padding:10px;"
-  >
+          <p>
+            <strong>Pacote:</strong>
+            ${pacote}
+          </p>
 
-  <br><br>
+          <p>
+            <strong>Valor:</strong>
+            R$ ${preco.toFixed(2).replace(".", ",")}
+          </p>
 
-  <button onclick="navigator.clipboard.writeText('8e538697-25d9-48cf-b757-8f63edd39ad1')">
-    📋 Copiar chave Pix
-  </button>
+          ${qrImagem}
 
-  <p>Depois de pagar, aguarde a confirmação.</p>
-`;
+          <h3>📋 Pix Copia e Cola</h3>
+
+          <textarea
+            id="codigoPix"
+            readonly
+            style="width:100%;max-width:400px;height:120px;"
+          >${pix.qr_code || ""}</textarea>
+
+          <br><br>
+
+          <button onclick="copiarPix()">
+            📋 Copiar Pix
+          </button>
+
+          <p>
+            Abra o aplicativo do seu banco,
+            escolha Pix e faça o pagamento.
+          </p>
+        `;
 
         document.getElementById("idff").value = "";
+        document.getElementById("email").value = "";
+
       } catch (erro) {
-        resultado.innerText =
-          "❌ Não foi possível enviar o pedido. Tente novamente.";
         console.error(erro);
+
+        resultado.innerHTML =
+          "<p>❌ Erro ao conectar com o pagamento.</p>";
       }
+    };
+
+    window.copiarPix = function() {
+      const campo =
+        document.getElementById("codigoPix");
+
+      if (!campo) return;
+
+      navigator.clipboard.writeText(campo.value);
+
+      alert("✅ Pix copiado!");
     };
   </script>
 </body>
-</html>
+  </html>
